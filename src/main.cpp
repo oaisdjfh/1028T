@@ -160,7 +160,76 @@ void competition_initialize() {}
 	Snail.move(127*snail);
 }
 void autonomous(){
-//asdfkjhasdffkjh
+    int flip = 1;
+    int shift = 0;
+    int shift_angle = 0;
+    if (left){
+        flip = -1;
+        shift = 5;
+        shift_angle = 90;
+    }
+    
+    exitTop.set_value(1);
+    rollers(1,-1,-1,0);
+    chassis.setPose(0, 0, 0);
+    seesaw.set_value(1);
+
+
+    //get balls
+    chassis.moveToPose(26,22.6,-45+shift_angle,2000);
+
+    //put balls in middle goal
+    chassis.moveToPose(-1,51,-45+shift_angle,2000);//move to lower middle goal
+    chassis.waitUntilDone();
+    rollers(-1, -1, -1, -1);//put ball in goal
+    pros::delay(1500);
+    rollers(0,0,0,0);
+
+    
+    //move back
+    leftMotors.move(-127);
+    rightMotors.move(-127);
+    pros::delay(300);
+    leftMotors.move(0);
+    rightMotors.move(0);
+    
+    
+    //go grab balls in matchload
+    chassis.moveToPose(32,16,175,1500, {.lead = .4});
+    chassis.waitUntilDone();
+    tube.set_value(1);
+    pros::delay(200);
+
+    leftMotors.move(127);
+    rightMotors.move(127);
+    pros::delay(300);
+    leftMotors.move(0);
+    rightMotors.move(0);
+
+    //chassis.moveToPose(33,5,180,1800);//go to tube
+    chassis.waitUntilDone();
+
+    //chassis.waitUntil(2000);
+    rollers(1,-1,-1,0);
+    pros::delay(1000);
+    rollers(0,0,0,0);
+
+    //move back
+    leftMotors.move(-127);
+    rightMotors.move(-127);
+    pros::delay(200);
+    leftMotors.move(0);
+    rightMotors.move(0);
+
+    //put balls in side goal
+    tube.set_value(0);
+    //chassis.moveToPose(-25-shift,-49,90,2000);//go to big goal
+    chassis.moveToPose(31,32,0,2000);//go to big goal
+    chassis.waitUntilDone();
+    seesaw.set_value(0);
+    rollers(1,-1,-1,-1);
+    pros::delay(6000);
+    rollers(0,0,0,0);
 }
 void opcontrol() {
 	while (true) {
