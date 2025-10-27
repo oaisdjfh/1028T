@@ -3,6 +3,7 @@
 #include "pros/imu.hpp"
 #include "pros/misc.h"
 #include "pros/motors.hpp"
+#include "pros/optical.hpp"
 #include "pros/rtos.hpp"
 #include "lemlib/api.hpp" // IWYU pragma: keep
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -22,15 +23,23 @@ pros::Motor Top(11);
 pros::adi::DigitalOut seesaw ('a');
 pros::adi::DigitalOut exitTop ('b');
 pros::adi::DigitalOut tube ('c');
-pros::Rotation odomVert(14);
-pros::Rotation odomHorz(1);
+pros::adi::DigitalOut descore ('d');
+pros::Rotation odomVert(-1);
+pros::Rotation odomHorz(14);
 pros::IMU imu(12);
+pros::Optical color_sensor(2);
+
+//1 is team red, 0 is team blue
+int team = 1;
+
 bool tube_val = false;
-
-
+bool descore_val = false;
+bool left = false;
+int show_left = 0;
+bool color_sort_on = false;
 
 lemlib::TrackingWheel vert_TrackingWheel(&odomVert, lemlib::Omniwheel::NEW_2, -1); //(&encoder name, wheeltype, offset)
-lemlib::TrackingWheel horz_TrackingWheel(&odomHorz, lemlib::Omniwheel::NEW_2, -4); //(&encoder name, wheeltype, offset)
+lemlib::TrackingWheel horz_TrackingWheel(&odomHorz, lemlib::Omniwheel::NEW_2, 2); //(&encoder name, wheeltype, offset)
 
 lemlib::OdomSensors sensors(&vert_TrackingWheel, nullptr,  &horz_TrackingWheel, nullptr, &imu);
 
@@ -40,19 +49,19 @@ lemlib::OdomSensors sensors(&vert_TrackingWheel, nullptr,  &horz_TrackingWheel, 
 // lateral PID controller
 lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              3, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+                                              100, // derivative gain (kD)
+                                              0, // anti windup
+                                              0, // small error range, in inches
+                                              0, // small error range timeout, in milliseconds
+                                              0, // large error range, in inches
+                                              0, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(4, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              10, // derivative gain (kD)
+                                              50, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in degrees
                                               100, // small error range timeout, in milliseconds
@@ -65,21 +74,35 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         angular_controller, // angular PID settings
                         sensors // odometry sensors
 );
+
+/*
+void on_center_button() {
+  static bool pressed = false;
+  pressed = !pressed;
+  if (pressed) {
+    left = !left;
+    show_left = abs(show_left-1);
+  }
+}
+*/
 void initialize() {
     odomHorz.reset_position();
 	odomVert.reset_position();
 	pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
     // print position to brain screen
+    chassis.setPose(0, 0, 0);
     pros::Task screen_task([&]() {
         while (true) {
             // print robot location to the brain screen
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+            pros::lcd::print(3, "Left Auton?: %f", show_left);
+
+
             // delay to save resources
             pros::delay(20);
-            printf("X: %.2f, Y: %.2f, theta: %.2f\n", chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
 
         }
     });
@@ -136,43 +159,38 @@ void competition_initialize() {}
 	Top.move(127*top);
 	Snail.move(127*snail);
 }
-/*
-ASSET(example_txt);
-
-void autonomous() {
-    chassis.setPose(0, 0, 0);
-    chassis.follow(example_txt, 15, 2000);
-}
-*/
 void autonomous(){
-    chassis.setPose(0,0,0);
     
 }
-
 void opcontrol() {
 	while (true) {
         exitTop.set_value(1);
-
-
-        //         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        color_sensor.set_led_pwm(50);
         // int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         // // move the chassis with curvature drive
         // chassis.arcade(leftY, rightX);
         // // delay to save resources
         // pros::delay(10);
-        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-        chassis.arcade(leftY, rightX);
-        /*
-        FILE* usd_file_write = fopen("inputs.txt", "w");
-        fputs(power, usd_file_write);
-        fputs(turn, usd_file_write);
-        */
+        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        chassis.arcade(rightX, leftY);
+
         pros::delay(20);
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
 			rollers(1, -1, -1, 0);
-			seesaw.set_value(1);
-		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+            if (color_sort_on){
+                if (team){
+                    if (color_sensor.get_hue()<10){seesaw.set_value(1); pros::delay(200);}
+                    else{seesaw.set_value(0);}
+                }
+                else{
+                    if (color_sensor.get_hue()>150){seesaw.set_value(1); pros::delay(200);}
+                    else{seesaw.set_value(0);}
+                }
+            } else{
+                seesaw.set_value(1);
+            }
+		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)){
 			rollers(1, -1, 1, -1);
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
             tube.set_value(!tube_val);
@@ -181,16 +199,26 @@ void opcontrol() {
 		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
 			rollers(1, -1, 1, 0);
 		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
-			rollers(1, -1, -1, 0);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)){
+            //color_sort_on = !color_sort_on;
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
 			rollers(1, -1, -1, -1);
 		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)){
 			rollers(1, -1, -1, 1);
-		} else {	
+		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)){
+			rollers(-1, -1, -1, -1);
+		}
+        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)){
+            rollers(-1, 1,1,-1);
+        }
+        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)){
+            descore.set_value(!descore_val);
+			descore_val = !descore_val;
+			pros::delay(500);
+        }
+        else {	
 			rollers(0, 0, 0, 0);
 			seesaw.set_value(0);
         }
-
 		pros::delay(10);
 	   }
 }
