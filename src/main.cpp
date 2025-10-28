@@ -31,7 +31,7 @@ pros::Optical color_sensor(2);
 
 //1 is team red, 0 is team blue
 int team = 1;
-
+bool skills = false;
 bool tube_val = false;
 bool descore_val = false;
 bool left = false;
@@ -159,16 +159,8 @@ void competition_initialize() {}
 	Top.move(127*top);
 	Snail.move(127*snail);
 }
-void autonomous(){
-    int flip = 1;
-    int shift = 0;
-    int shift_angle = 0;
-    if (left){
-        flip = -1;
-        shift = 5;
-        shift_angle = 90;
-    }
-    
+
+void quarter_auton(int x_inverse, int y_inverse, int shift_angle){
     exitTop.set_value(1);
     rollers(1,-1,-1,0);
     chassis.setPose(0, 0, 0);
@@ -230,6 +222,21 @@ void autonomous(){
     rollers(1,-1,-1,-1);
     pros::delay(6000);
     rollers(0,0,0,0);
+}
+void autonomous(){
+    if (!skills){
+        int flip = 1;
+        int shift_angle = 0;
+        if (left){
+            flip = -1;
+            shift_angle = 90;
+        }
+        quarter_auton(1,flip,shift_angle);
+    } else{
+        quarter_auton(1, 1, 0);
+        chassis.moveToPose(-5, 10, 270, 3000);
+        quarter_auton(1,-1,90);
+    }
 }
 void opcontrol() {
 	while (true) {
