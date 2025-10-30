@@ -99,7 +99,11 @@ void initialize() {
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
             pros::lcd::print(3, "Left Auton?: %f", show_left);
-
+            if (pros::lcd::read_buttons() == 100) {
+                left = !left;
+                show_left = abs(show_left-1);
+                pros::delay(300);
+            }
 
             // delay to save resources
             pros::delay(20);
