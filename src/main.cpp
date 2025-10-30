@@ -35,7 +35,6 @@ bool skills = false;
 bool tube_val = false;
 bool descore_val = false;
 bool left = false;
-int show_left = 0;
 bool color_sort_on = false;
 
 lemlib::TrackingWheel vert_TrackingWheel(&odomVert, lemlib::Omniwheel::NEW_2, -1); //(&encoder name, wheeltype, offset)
@@ -98,13 +97,23 @@ void initialize() {
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-            pros::lcd::print(3, "Left Auton?: %f", show_left);
-            if (pros::lcd::read_buttons() == 100) {
-                left = !left;
-                show_left = abs(show_left-1);
-                pros::delay(300);
+            pros::lcd::print(3, left ? "Left Side" : "Right Side");
+            if (pros::lcd::read_buttons() == 28) {
+                pros::lcd::print(3, "Confirm?");
+                pros::delay(500);
+                while (true){
+                    if (pros::lcd::read_buttons() == 28) {
+                        left = !left;
+                        pros::delay(300);
+                        break;
+                    }
+                    else if (pros::lcd::read_buttons() == 26){
+                        break;
+                    }
+                    pros::delay(20);
+                }
             }
-
+            printf("Buttons Bitmap: %d\n", pros::lcd::read_buttons());
             // delay to save resources
             pros::delay(20);
 
