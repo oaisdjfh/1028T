@@ -7,32 +7,27 @@
 #include "pros/rtos.hpp"
 #include "lemlib/api.hpp" // IWYU pragma: keep
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
-pros::Motor leftFront(8); // Left front motor
-pros::Motor leftMid(9); // Left front motor
-pros::Motor leftBack(10); // Left front motor
-pros::Motor rightFront(6);  // Left back motor
-pros::Motor rightMid(7); // Right front motor
-pros::Motor rightBack(5); // Right back motor
-	pros::MotorGroup leftMotors({-15,-16,-17});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
-	pros::MotorGroup rightMotors({5,7,6});
+pros::Motor leftFront(11); // Left front motor
+pros::Motor leftMid(12); // Left front motor
+pros::Motor leftBack(13); // Left front motor
+pros::Motor rightFront(3);  // Left back motor
+pros::Motor rightMid(2); // Right front motor
+pros::Motor rightBack(1); // Right back motor
+	pros::MotorGroup leftMotors({11,12,13});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
+	pros::MotorGroup rightMotors({3,2,1});
 	lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 12.5, lemlib::Omniwheel::NEW_325, 450, 2); 
-pros::Motor Intake(18);
+pros::Motor Intake(14);
 pros::Motor back(19);
 pros::Motor Snail(20);
-pros::Motor Top(11);
-pros::adi::DigitalOut seesaw ('a');
-pros::adi::DigitalOut exitTop ('b');
-pros::adi::DigitalOut tube ('c');
-pros::adi::DigitalOut descore ('d');
+pros::Motor Top(10);
+pros::adi::DigitalOut middle ('d');
 pros::Rotation odomVert(-1);
 pros::Rotation odomHorz(14);
 pros::IMU imu(12);
 pros::Optical color_sensor(2);
-
 //1 is team red, 0 is team blue
 int team = 1;
 bool skills = false;
-bool tube_val = false;
 bool descore_val = false;
 bool left = false;
 bool color_sort_on = false;
@@ -166,13 +161,11 @@ void competition_initialize() {}
  * task, not resume it from where it left off.
  */
  
- void rollers(int intake, int Back, int top, int snail){
+ void rollers(int intake, int top){
 	Intake.move(127*intake);
-	back.move(127*Back);
 	Top.move(127*top);
-	Snail.move(127*snail);
 }
-
+/*
 void quarter_auton(int x_inverse, int y_inverse, int shift_angle){
     exitTop.set_value(1);
     rollers(1,-1,-1,0);
@@ -236,6 +229,7 @@ void quarter_auton(int x_inverse, int y_inverse, int shift_angle){
     pros::delay(6000);
     rollers(0,0,0,0);
 }
+*/
 void autonomous(){
     if (!skills){
         int flip = 1;
@@ -244,69 +238,36 @@ void autonomous(){
             flip = -1;
             shift_angle = 90;
         }
-        quarter_auton(1,flip,shift_angle);
+        //quarter_auton(1,flip,shift_angle);
     } else{
-        quarter_auton(1, 1, 0);
+        //quarter_auton(1, 1, 0);
         chassis.moveToPose(-5, 10, 270, 3000);
-        quarter_auton(1,-1,90);
+        //quarter_auton(1,-1,90);
     }
 }
 void opcontrol() {
 	while (true) {
-        exitTop.set_value(1);
         color_sensor.set_led_pwm(50);
         // int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         // // move the chassis with curvature drive
         // chassis.arcade(leftY, rightX);
         // // delay to save resources
         // pros::delay(10);
-        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-        int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int leftY = -controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int rightX = -controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         chassis.arcade(rightX, leftY);
 
         pros::delay(20);
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
-			rollers(1, -1, -1, 0);
-            if (color_sort_on){
-                if (team){
-                    if (color_sensor.get_hue()<10){seesaw.set_value(1); pros::delay(200);}
-                    else{seesaw.set_value(0);}
-                }
-                else{
-                    if (color_sensor.get_hue()>150){seesaw.set_value(1); pros::delay(200);}
-                    else{seesaw.set_value(0);}
-                }
-            } else{
-                seesaw.set_value(1);
-            }
-		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)){
-			rollers(1, -1, 1, -1);
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
-            tube.set_value(!tube_val);
-			tube_val = !tube_val;
-			pros::delay(500);
-		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
-			rollers(1, -1, 1, 0);
-		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
-            //color_sort_on = !color_sort_on;
-        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
-			rollers(1, -1, -1, -1);
-		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)){
-			rollers(1, -1, -1, 1);
-		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)){
-			rollers(-1, -1, -1, -1);
-		}
-        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)){
-            rollers(-1, 1,1,-1);
-        }
-        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)){
-            descore.set_value(!descore_val);
-			descore_val = !descore_val;
-			pros::delay(500);
-        }
-        else {	
-			rollers(0, 0, 0, 0);
-			seesaw.set_value(0);
+			rollers(-1,0);
+        }else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+            rollers(-1,1);
+        }else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
+            middle.set_value(1);
+            rollers(-1,1);
+        }else {	
+			rollers(0, 0);
+			middle.set_value(0);
         }
 		pros::delay(10);
 	   }
