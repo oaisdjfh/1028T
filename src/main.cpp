@@ -4,15 +4,16 @@
 #include "pros/misc.h"
 #include "pros/motors.hpp"
 #include "pros/optical.hpp"
+#include "pros/rtos.h"
 #include "pros/rtos.hpp"
 #include "lemlib/api.hpp" // IWYU pragma: keep
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
-pros::Motor leftFront(11); // Left front motor
-pros::Motor leftMid(12); // Left front motor
-pros::Motor leftBack(13); // Left front motor
-pros::Motor rightFront(3);  // Left back motor
-pros::Motor rightMid(2); // Right front motor
-pros::Motor rightBack(1); // Right back motor
+pros::Motor leftFront(1); // Left front motor
+pros::Motor leftMid(3); // Left front motor
+pros::Motor leftBack(2); // Left front motor
+pros::Motor rightFront(12);  // Left back motor
+pros::Motor rightMid(11); // Right front motor
+pros::Motor rightBack(13); // Right back motor
 	pros::MotorGroup leftMotors({11,12,13});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
 	pros::MotorGroup rightMotors({3,2,1});
 	lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 12.5, lemlib::Omniwheel::NEW_325, 450, 2); 
@@ -21,6 +22,7 @@ pros::Motor back(19);
 pros::Motor Snail(20);
 pros::Motor Top(10);
 pros::adi::DigitalOut middle ('d');
+pros::adi::DigitalOut little_will ('a');
 pros::Rotation odomVert(-1);
 pros::Rotation odomHorz(14);
 pros::IMU imu(12);
@@ -31,7 +33,7 @@ bool skills = false;
 bool descore_val = false;
 bool left = false;
 bool color_sort_on = false;
-
+bool will_val = false;
 lemlib::TrackingWheel vert_TrackingWheel(&odomVert, lemlib::Omniwheel::NEW_2, -1); //(&encoder name, wheeltype, offset)
 lemlib::TrackingWheel horz_TrackingWheel(&odomHorz, lemlib::Omniwheel::NEW_2, 2); //(&encoder name, wheeltype, offset)
 
@@ -245,7 +247,17 @@ void autonomous(){
         //quarter_auton(1,-1,90);
     }
 }
+pros::Task litle_will_task([](){
+    while (true){
+        if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+            will_val = !will_val;
+            little_will.set_value(will_val);
+            pros::delay(500);
+        }
+    }
+});
 void opcontrol() {
+
 	while (true) {
         color_sensor.set_led_pwm(50);
         // int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
@@ -253,7 +265,7 @@ void opcontrol() {
         // chassis.arcade(leftY, rightX);
         // // delay to save resources
         // pros::delay(10);
-        int leftY = -controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightX = -controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         chassis.arcade(rightX, leftY);
 
@@ -265,6 +277,8 @@ void opcontrol() {
         }else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
             middle.set_value(1);
             rollers(-1,1);
+        }else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)){
+            rollers(1,-1);
         }else {	
 			rollers(0, 0);
 			middle.set_value(0);
