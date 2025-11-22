@@ -152,7 +152,7 @@ void competition_initialize() {}
  * task, not resume it from where it left off.
  */
  
- void rollers(int intake, int top){
+ void rollers(int intake, double top){
 	Intake.move(127*intake);
 	Top.move(127*top);
 }
@@ -187,6 +187,7 @@ void autonomous(){
     chassis.moveToPoint(-32.5, 16, 1300,{.forwards = false});
     chassis.waitUntilDone();
     rollers(-1,1);
+    pros::delay(200);
     if (Intake.get_actual_velocity()<50){
         rollers(1,-1);
         pros::delay(300);
@@ -198,15 +199,17 @@ void autonomous(){
     rollers(-1,0);
     chassis.moveToPose(12.2,30.4,42.8,2000,{.maxSpeed=70, .minSpeed=50});
     chassis.turnToHeading(159.7,1000);
-    chassis.moveToPose(27.4, .9, 173.2, 3000,{.minSpeed=60});
+    chassis.moveToPose(18, 2, 150,3000);
     little_will.set_value(1);
-    chassis.moveToPose(28.3, -17, 180, 2000,{.minSpeed=55});    
+    chassis.moveToPose(27.4, .9, 173.2, 3000,{.minSpeed=60});
+    chassis.moveToPose(28.3, -30, 180, 2000,{.minSpeed=65});    
     pros::delay(2000);
     rollers(0,0);
     chassis.moveToPose(31,21,180,1500,{.forwards = false});
     chassis.waitUntilDone();
     rollers(-1,1);
-    if (Intake.get_actual_velocity()<50){
+    pros::delay(200);
+    if (Intake.get_actual_velocity()<10){
         rollers(1,-1);
         pros::delay(300);
     }
@@ -266,7 +269,7 @@ void opcontrol() {
 
         pros::delay(20);
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
-			rollers(-1,0);
+			rollers(-1,-.4);
         }else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
             rollers(-1,1);
         }else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
