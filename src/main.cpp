@@ -3,10 +3,11 @@
 #include "pros/imu.hpp"
 #include "pros/misc.h"
 #include "pros/motors.hpp"
-#include "pros/optical.hpp"
-#include "pros/rtos.h"
+//#include "pros/optical.hpp"
+//#include "pros/rtos.h"
 #include "pros/rtos.hpp"
 #include "lemlib/api.hpp" // IWYU pragma: keep
+#include <iostream>
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 pros::Motor leftFront(1); // Left front motor
 pros::Motor leftMid(3); // Left front motor
@@ -14,28 +15,23 @@ pros::Motor leftBack(2); // Left front motor
 pros::Motor rightFront(12);  // Left back motor
 pros::Motor rightMid(11); // Right front motor
 pros::Motor rightBack(13); // Right back motor
-	pros::MotorGroup leftMotors({11,12,13});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
+	pros::MotorGroup leftMotors({-11,-12,-13});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
 	pros::MotorGroup rightMotors({3,2,1});
 	lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 12.5, lemlib::Omniwheel::NEW_325, 450, 2); 
 pros::Motor Intake(14);
-pros::Motor back(19);
-pros::Motor Snail(20);
 pros::Motor Top(10);
 pros::adi::DigitalOut middle ('d');
 pros::adi::DigitalOut little_will ('a');
-pros::Rotation odomVert(-1);
-pros::Rotation odomHorz(14);
-pros::IMU imu(12);
-pros::Optical color_sensor(2);
-//1 is team red, 0 is team blue
-int team = 1;
+pros::Rotation odomVert(-16);
+pros::Rotation odomHorz(-9);
+pros::IMU imu(20);
 bool skills = false;
-bool descore_val = false;
 bool left = false;
-bool color_sort_on = false;
 bool will_val = false;
-lemlib::TrackingWheel vert_TrackingWheel(&odomVert, lemlib::Omniwheel::NEW_2, -1); //(&encoder name, wheeltype, offset)
-lemlib::TrackingWheel horz_TrackingWheel(&odomHorz, lemlib::Omniwheel::NEW_2, 2); //(&encoder name, wheeltype, offset)
+bool wing_val = false;
+pros::adi::DigitalOut wing('h');
+lemlib::TrackingWheel vert_TrackingWheel(&odomVert, lemlib::Omniwheel::NEW_2, -.25); //(&encoder name, wheeltype, offset)
+lemlib::TrackingWheel horz_TrackingWheel(&odomHorz, lemlib::Omniwheel::NEW_2, -1.75); //(&encoder name, wheeltype, offset)
 
 lemlib::OdomSensors sensors(&vert_TrackingWheel, nullptr,  &horz_TrackingWheel, nullptr, &imu);
 
@@ -45,7 +41,7 @@ lemlib::OdomSensors sensors(&vert_TrackingWheel, nullptr,  &horz_TrackingWheel, 
 // lateral PID controller
 lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              100, // derivative gain (kD)
+                                              50, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in inches
                                               0, // small error range timeout, in milliseconds
@@ -55,9 +51,9 @@ lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(4, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              50, // derivative gain (kD)
+                                              10, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in degrees
                                               100, // small error range timeout, in milliseconds
@@ -70,17 +66,6 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         angular_controller, // angular PID settings
                         sensors // odometry sensors
 );
-
-/*
-void on_center_button() {
-  static bool pressed = false;
-  pressed = !pressed;
-  if (pressed) {
-    left = !left;
-    show_left = abs(show_left-1);
-  }
-}
-*/
 void initialize() {
     odomHorz.reset_position();
 	odomVert.reset_position();
@@ -94,6 +79,7 @@ void initialize() {
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+            std::cout << "X: " << chassis.getPose().x << " Y: " << chassis.getPose().y << " Theta: " << chassis.getPose().theta << std::endl;
             pros::lcd::print(3, left ? "Left Side" : "Right Side");
             if (pros::lcd::read_buttons() == 28) {
                 pros::lcd::print(3, "Confirm?");
@@ -111,12 +97,15 @@ void initialize() {
                 }
             }
             printf("Buttons Bitmap: %d\n", pros::lcd::read_buttons());
+            
             // delay to save resources
             pros::delay(20);
 
         }
     });
 }
+
+
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -167,72 +156,40 @@ void competition_initialize() {}
 	Intake.move(127*intake);
 	Top.move(127*top);
 }
-/*
+
 void quarter_auton(int x_inverse, int y_inverse, int shift_angle){
-    exitTop.set_value(1);
-    rollers(1,-1,-1,0);
-    chassis.setPose(0, 0, 0);
-    seesaw.set_value(1);
+    rollers(-1,0);
+    chassis.setPose(0, 0, 180);
+    //pros::delay(2000);
 
+    //chassis.moveToPoint(8.24, -14, 1000,{.maxSpeed=60, .earlyExitRange=6});
 
-    //get balls
-    chassis.moveToPose(26,22.6,-45+shift_angle,2000);
-
-    //put balls in middle goal
-    chassis.moveToPose(-1,51,-45+shift_angle,2000);//move to lower middle goal
-    chassis.waitUntilDone();
-    rollers(-1, -1, -1, -1);//put ball in goal
-    pros::delay(1500);
-    rollers(0,0,0,0);
-
-    
-    //move back
-    leftMotors.move(-127);
-    rightMotors.move(-127);
-    pros::delay(300);
-    leftMotors.move(0);
-    rightMotors.move(0);
-    
-    
-    //go grab balls in matchload
-    chassis.moveToPose(32,16,175,1500, {.lead = .4});
-    chassis.waitUntilDone();
-    tube.set_value(1);
-    pros::delay(200);
-
-    leftMotors.move(127);
-    rightMotors.move(127);
-    pros::delay(300);
-    leftMotors.move(0);
-    rightMotors.move(0);
-
-    //chassis.moveToPose(33,5,180,1800);//go to tube
-    chassis.waitUntilDone();
-
-    //chassis.waitUntil(2000);
-    rollers(1,-1,-1,0);
-    pros::delay(1000);
-    rollers(0,0,0,0);
-
-    //move back
-    leftMotors.move(-127);
-    rightMotors.move(-127);
-    pros::delay(200);
-    leftMotors.move(0);
-    rightMotors.move(0);
-
-    //put balls in side goal
-    tube.set_value(0);
-    //chassis.moveToPose(-25-shift,-49,90,2000);//go to big goal
-    chassis.moveToPose(31,32,0,2000);//go to big goal
-    chassis.waitUntilDone();
-    seesaw.set_value(0);
-    rollers(1,-1,-1,-1);
-    pros::delay(6000);
-    rollers(0,0,0,0);
+    //chassis.moveToPose(-6.17,-46.1,-135,3000,{.maxSpeed=80, .earlyExitRange=3});
+    chassis.moveToPoint(0,-25,2000,{.maxSpeed=80, .earlyExitRange=15});
+    pros::delay(5000);
 }
-*/
+
 void autonomous(){
+    chassis.setPose(0, 0, 0);
+
+    chassis.turnToHeading(90,100000);
+    /*
+    rollers(-1,0);
+    chassis.moveToPose(-13.3,28.9,-39.4,3000,{.maxSpeed=70, .minSpeed=60});
+    //chassis.turnToHeading(-130,2000);
+
+    //chassis.moveToPoint(3,35,2000,{.forwards = false, .maxSpeed=80, .earlyExitRange=5});
+    chassis.moveToPose(1,36,-130,2000,{.forwards = false, .maxSpeed=80, .earlyExitRange=5});
+
+    
+
+    //-3.1,29,-82
+    chassis.waitUntilDone();
+    middle.set_value(1);
+    rollers(-1,1);
+    */
+    
+    /*
     if (!skills){
         int flip = 1;
         int shift_angle = 0;
@@ -240,14 +197,16 @@ void autonomous(){
             flip = -1;
             shift_angle = 90;
         }
-        //quarter_auton(1,flip,shift_angle);
+        quarter_auton(1,flip, shift_angle);
     } else{
-        //quarter_auton(1, 1, 0);
-        chassis.moveToPose(-5, 10, 270, 3000);
-        //quarter_auton(1,-1,90);
+        quarter_auton(1, 1, 0);
     }
+    */
+    //quarter_auton(1, 1, 0);
+    
 }
-pros::Task litle_will_task([](){
+
+void little_task(){
     while (true){
         if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
             will_val = !will_val;
@@ -255,18 +214,25 @@ pros::Task litle_will_task([](){
             pros::delay(500);
         }
     }
-});
+    pros::delay(20);
+}
+void wing_task(){
+    while (true){
+        if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
+            wing_val = !wing_val;
+            wing.set_value(wing_val);
+            pros::delay(500);
+        }
+    }
+    pros::delay(20);
+}
 void opcontrol() {
 
 	while (true) {
-        color_sensor.set_led_pwm(50);
-        // int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-        // // move the chassis with curvature drive
-        // chassis.arcade(leftY, rightX);
-        // // delay to save resources
-        // pros::delay(10);
-        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int rightX = -controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        //pros::Task little_task_handle(little_task);
+        //pros::Task wing_task_handle(wing_task);
+        int rightX = -controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         chassis.arcade(rightX, leftY);
 
         pros::delay(20);
@@ -283,6 +249,5 @@ void opcontrol() {
 			rollers(0, 0);
 			middle.set_value(0);
         }
-		pros::delay(10);
 	   }
 }
