@@ -51,7 +51,7 @@ lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(1.7, // proportional gain (kP)
                                               0, // integral gain (kI)
                                               10, // derivative gain (kD)
                                               3, // anti windup
@@ -75,7 +75,7 @@ void initialize() {
     chassis.setPose(0, 0, 0);
     pros::Task screen_task([&]() {
         while (true) {
-            // print robot location to the brain screen
+            // print robot location to the brain screaen
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
@@ -99,7 +99,7 @@ void initialize() {
             printf("Buttons Bitmap: %d\n", pros::lcd::read_buttons());
             
             // delay to save resources
-            pros::delay(20);
+            pros::delay(1000);
 
         }
     });
@@ -157,52 +157,46 @@ void competition_initialize() {}
 	Top.move(127*top);
 }
 
-void quarter_auton(int x_inverse, int y_inverse, int shift_angle){
-    rollers(-1,0);
-    chassis.setPose(0, 0, 180);
-    //pros::delay(2000);
-
-    //chassis.moveToPoint(8.24, -14, 1000,{.maxSpeed=60, .earlyExitRange=6});
-
-    //chassis.moveToPose(-6.17,-46.1,-135,3000,{.maxSpeed=80, .earlyExitRange=3});
-    chassis.moveToPoint(0,-25,2000,{.maxSpeed=80, .earlyExitRange=15});
-    pros::delay(5000);
-}
-
 void autonomous(){
-    chassis.setPose(0, 0, 0);
-
-    chassis.turnToHeading(90,100000);
+    
     /*
+    chassis.setPose(0, 0, 0);
     rollers(-1,0);
-    chassis.moveToPose(-13.3,28.9,-39.4,3000,{.maxSpeed=70, .minSpeed=60});
-    //chassis.turnToHeading(-130,2000);
 
-    //chassis.moveToPoint(3,35,2000,{.forwards = false, .maxSpeed=80, .earlyExitRange=5});
-    chassis.moveToPose(1,36,-130,2000,{.forwards = false, .maxSpeed=80, .earlyExitRange=5});
-
+    //chassis.moveToPose(-6.69,30.54,-21.60,3000,{.maxSpeed=70, .minSpeed=50});
+    chassis.moveToPose(-9.6,30.2,-28.6,3000,{.maxSpeed=70, .minSpeed=50});
+    chassis.turnToHeading(-131.64, 1000);
+    chassis.moveToPose(3.5,38,-131.64,2000,{.forwards = false, .maxSpeed=80, .earlyExitRange=5});
     
 
     //-3.1,29,-82
     chassis.waitUntilDone();
     middle.set_value(1);
     rollers(-1,1);
+    pros::delay(3000);
+    rollers(0,0);
+    middle.set_value(0);
+
+    chassis.moveToPoint(-5.82,24.97,1000);
+    chassis.turnToHeading(-55.7,1000);
+    rollers(-1,0);
+    //chassis.moveToPose(-28.67,40.86,-55.7,3000);
+    chassis.moveToPose(-27.5,38.7,-62.7,3000);
+
+
     */
-    
     /*
     if (!skills){
         int flip = 1;
         int shift_angle = 0;
         if (left){
-            flip = -1;
-            shift_angle = 90;
+            //left auton
         }
-        quarter_auton(1,flip, shift_angle);
+        //auton
     } else{
-        quarter_auton(1, 1, 0);
+        //skills auton
     }
     */
-    //quarter_auton(1, 1, 0);
     
 }
 
