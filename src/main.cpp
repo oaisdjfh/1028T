@@ -158,7 +158,6 @@ void competition_initialize() {}
 }
 
 void autonomous(){
-    
     /*
     chassis.setPose(0, 0, 0);
     rollers(-1,0);
@@ -166,38 +165,52 @@ void autonomous(){
     //chassis.moveToPose(-6.69,30.54,-21.60,3000,{.maxSpeed=70, .minSpeed=50});
     chassis.moveToPose(-9.6,30.2,-28.6,3000,{.maxSpeed=70, .minSpeed=50});
     chassis.turnToHeading(-131.64, 1000);
-    chassis.moveToPose(3.5,38,-131.64,2000,{.forwards = false, .maxSpeed=80, .earlyExitRange=5});
+    chassis.moveToPose(3.5,38,-131.64,1500,{.forwards = false, .maxSpeed=80, .earlyExitRange=5});
     
 
     //-3.1,29,-82
     chassis.waitUntilDone();
     middle.set_value(1);
-    rollers(-1,1);
-    pros::delay(3000);
+    rollers(-1,-1);
+    pros::delay(2500);
     rollers(0,0);
     middle.set_value(0);
 
-    chassis.moveToPoint(-5.82,24.97,1000);
-    chassis.turnToHeading(-55.7,1000);
+    chassis.moveToPose(-33,-.86,-132.9,4000,{.minSpeed=60});
+    little_will.set_value(1);
     rollers(-1,0);
-    //chassis.moveToPose(-28.67,40.86,-55.7,3000);
-    chassis.moveToPose(-27.5,38.7,-62.7,3000);
+    chassis.turnToHeading(-180,1000);
+    chassis.moveToPoint(-31,-18,2000,{.minSpeed=55});
+    pros::delay(2000);
+    rollers(0,0);
 
-
-    */
-    /*
-    if (!skills){
-        int flip = 1;
-        int shift_angle = 0;
-        if (left){
-            //left auton
-        }
-        //auton
-    } else{
-        //skills auton
+    chassis.moveToPoint(-32.5, 16, 1300,{.forwards = false});
+    chassis.waitUntilDone();
+    rollers(-1,1);
+    if (Intake.get_actual_velocity()<50){
+        rollers(1,-1);
+        pros::delay(300);
     }
+    rollers(-1,1);
     */
-    
+
+    chassis.setPose(0,0,0);
+    rollers(-1,0);
+    chassis.moveToPose(12.2,30.4,42.8,2000,{.maxSpeed=70, .minSpeed=50});
+    chassis.turnToHeading(159.7,1000);
+    chassis.moveToPose(27.4, .9, 173.2, 3000,{.minSpeed=60});
+    little_will.set_value(1);
+    chassis.moveToPose(28.3, -17, 180, 2000,{.minSpeed=55});    
+    pros::delay(2000);
+    rollers(0,0);
+    chassis.moveToPose(31,21,180,1500,{.forwards = false});
+    chassis.waitUntilDone();
+    rollers(-1,1);
+    if (Intake.get_actual_velocity()<50){
+        rollers(1,-1);
+        pros::delay(300);
+    }
+    rollers(-1,1);
 }
 
 void little_task(){
@@ -220,11 +233,33 @@ void wing_task(){
     }
     pros::delay(20);
 }
+pros::Task little_task_thing([]() {
+    while (true){
+        if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+            will_val = !will_val;
+            little_will.set_value(will_val);
+            pros::delay(500);
+        }
+    }
+    pros::delay(20);
+});
+pros::Task wing_task_thing([]() {
+    while (true){
+        if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
+            wing_val = !wing_val;
+            wing.set_value(wing_val);
+            pros::delay(500);
+        }
+    }
+    pros::delay(20);
+});
+        
 void opcontrol() {
 
 	while (true) {
         //pros::Task little_task_handle(little_task);
         //pros::Task wing_task_handle(wing_task);
+        
         int rightX = -controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         chassis.arcade(rightX, leftY);
