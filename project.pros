@@ -299,7 +299,7 @@
     },
     "upload_options": {
       "description": "My PROS Project",
-      "slot": 2,
+      "slot": 1,
       "icon": "pros"
     },
     "use_early_access": false
