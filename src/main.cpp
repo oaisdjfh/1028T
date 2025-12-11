@@ -178,15 +178,17 @@ void autonomous(){
     chassis.moveToPose(-13, 24, 180, 1500, {.minSpeed = 50});
     chassis.moveToPose(-32, 4, 230, 1500, {.minSpeed = 50});
     chassis.turnToHeading(180,1000, {.minSpeed = 50});
-    chassis.moveToPoint(-30, -37, 3000, {.minSpeed = 50});
-    chassis.moveToPose(-42, -30, -223, 1500, {.forwards = false, .minSpeed = 40});
+    chassis.moveToPoint(-30, -37, 3000);
+    pros::delay(10000000);
+    /*
+    chassis.moveToPose(-42, -23, -220, 1500, {.forwards = false});
     //score into middle goal
     middle.set_value(1);
     rollers(1,1);
     pros::delay(1500);
     rollers(0,0);
     middle.set_value(0);
-
+    */
 
 
 
