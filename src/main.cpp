@@ -164,31 +164,37 @@ void autonomous(){
     chassis.turnToHeading(90,1000,{ .maxSpeed = 80, .minSpeed=40});
     little_will.set_value(1);
     chassis.moveToPoint(10,32, 1750,{ .maxSpeed = 80, .minSpeed=40});
-    pros::delay(650); //intake matchload
+    pros::delay(1); //intake matchload
     chassis.moveToPoint(-26, 32, 1500,{.forwards = false, .maxSpeed = 70, .minSpeed=40, .earlyExitRange=2});
     rollers(0,0);
     pros::delay(700);//time to start extake
     rollers(1,1);
-    pros::delay(850);//extake into right goal
+    pros::delay(800);//extake into right goal
     rollers(0,0);
     little_will.set_value(0);
 
     //start picking up 
+    rollers(1,1);
+    pros::delay(250);
     rollers(1,0);
     chassis.moveToPose(-13, 24, 180, 1500, {.minSpeed = 50});
     chassis.moveToPose(-32, 4, 230, 1500, {.minSpeed = 50});
     chassis.turnToHeading(180,1000, {.minSpeed = 50});
-    chassis.moveToPoint(-30, -37, 3000);
-    pros::delay(10000000);
-    /*
-    chassis.moveToPose(-42, -23, -220, 1500, {.forwards = false});
+    chassis.moveToPoint(-30, -37, 3000, {.minSpeed = 40});
+
+    
+    pros::delay(500);
+    little_will.set_value(1);
+    //chassis.turnToPoint(-18,-51,1000, {.minSpeed = 40});
+    chassis.turnToHeading(-220, 1000, {.minSpeed = 50});
+    chassis.moveToPoint(-43, -27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 30, .earlyExitRange=3});
+    pros::delay(750);
     //score into middle goal
     middle.set_value(1);
     rollers(1,1);
     pros::delay(1500);
     rollers(0,0);
     middle.set_value(0);
-    */
 
 
 
