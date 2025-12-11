@@ -22,7 +22,7 @@ pros::Motor Intake(14);
 pros::Motor Top(10);
 pros::adi::DigitalOut middle ('d');
 pros::adi::DigitalOut little_will ('a');
-pros::Rotation odomVert(-16);
+pros::Rotation odomVert(16);
 pros::Rotation odomHorz(-9);
 pros::IMU imu(19);
 bool skills = false;
@@ -30,8 +30,8 @@ bool left = false;
 bool will_val = false;
 bool wing_val = false;
 pros::adi::DigitalOut wing('h');
-lemlib::TrackingWheel vert_TrackingWheel(&odomVert, lemlib::Omniwheel::NEW_2, -.25); //(&encoder name, wheeltype, offset)
-lemlib::TrackingWheel horz_TrackingWheel(&odomHorz, lemlib::Omniwheel::NEW_2, -1.75); //(&encoder name, wheeltype, offset)
+lemlib::TrackingWheel vert_TrackingWheel(&odomVert, lemlib::Omniwheel::NEW_2, .75); //(&encoder name, wheeltype, offset)
+lemlib::TrackingWheel horz_TrackingWheel(&odomHorz, lemlib::Omniwheel::NEW_2, -2); //(&encoder name, wheeltype, offset)
 
 lemlib::OdomSensors sensors(&vert_TrackingWheel, nullptr,  &horz_TrackingWheel, nullptr, &imu);
 
@@ -158,7 +158,40 @@ void competition_initialize() {}
 }
 
 void autonomous(){
-    
+    chassis.setPose(0, 0, 0);
+    rollers(1,0);
+    chassis.moveToPoint(0,32, 1600,{ .maxSpeed = 80, .minSpeed=40, .earlyExitRange=10});
+    chassis.turnToHeading(90,1000,{ .maxSpeed = 80, .minSpeed=40});
+    little_will.set_value(1);
+    chassis.moveToPoint(10,32, 1750,{ .maxSpeed = 80, .minSpeed=40});
+    pros::delay(650); //intake matchload
+    chassis.moveToPoint(-26, 32, 1500,{.forwards = false, .maxSpeed = 70, .minSpeed=40, .earlyExitRange=2});
+    rollers(0,0);
+    pros::delay(700);//time to start extake
+    rollers(1,1);
+    pros::delay(850);//extake into right goal
+    rollers(0,0);
+    little_will.set_value(0);
+
+    //start picking up 
+    rollers(1,0);
+    chassis.moveToPose(-13, 24, 180, 1500, {.minSpeed = 50});
+    chassis.moveToPose(-32, 4, 230, 1500, {.minSpeed = 50});
+    chassis.turnToHeading(180,1000, {.minSpeed = 50});
+    chassis.moveToPoint(-30, -37, 3000, {.minSpeed = 50});
+    chassis.moveToPose(-42, -30, -223, 1500, {.forwards = false, .minSpeed = 40});
+    //score into middle goal
+    middle.set_value(1);
+    rollers(1,1);
+    pros::delay(1500);
+    rollers(0,0);
+    middle.set_value(0);
+
+
+
+
+
+    /*
     chassis.setPose(0, 0, 0);
     rollers(-1,0);
 
@@ -193,7 +226,12 @@ void autonomous(){
         pros::delay(300);
     }
     rollers(-1,1);
-    
+    */
+
+
+
+
+
     /*
     chassis.setPose(0,0,0);
     rollers(-1,0);
@@ -224,7 +262,7 @@ void autonomous(){
     */
     
 }
-
+/*
 void little_task(){
     while (true){
         if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
@@ -245,6 +283,7 @@ void wing_task(){
     }
     pros::delay(20);
 }
+*/
 pros::Task little_task_thing([]() {
     while (true){
         if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
