@@ -1,4 +1,6 @@
 #include "main.h"
+#include "lemlib/chassis/chassis.hpp"
+#include "lemlib/chassis/trackingWheel.hpp"
 #include "pros/adi.hpp"
 #include "pros/imu.hpp"
 #include "pros/misc.h"
@@ -9,32 +11,29 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include <iostream>
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
-pros::Motor leftFront(1); // Left front motor
-pros::Motor leftMid(3); // Left front motor
-pros::Motor leftBack(2); // Left front motor
-pros::Motor rightFront(12);  // Left back motor
-pros::Motor rightMid(11); // Right front motor
-pros::Motor rightBack(13); // Right back motor
-	pros::MotorGroup leftMotors({-11,-12,-13});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
-	pros::MotorGroup rightMotors({3,2,1});
-	lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 12.5, lemlib::Omniwheel::NEW_325, 450, 2); 
-pros::Motor Intake(14);
+	//pros::MotorGroup leftMotors({9,7,8});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
+	//pros::MotorGroup rightMotors({-5,-3,-4});
+    pros::MotorGroup rightMotors({9,7,8});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
+	pros::MotorGroup leftMotors({-5,-3,-4});
+	lemlib::Drivetrain drivetrain(&leftMotors, &rightMotors, 12, lemlib::Omniwheel::NEW_325, 450, 2); 
+pros::Motor Intake(2);
 pros::Motor Top(10);
 pros::adi::DigitalOut middle ('d');
 pros::adi::DigitalOut little_will ('a');
-pros::Rotation odomVert(16);
-pros::Rotation odomHorz(-9);
-pros::IMU imu(19);
+pros::adi::DigitalOut mid_descor('b');
+pros::Rotation odomVert(6);
+pros::Rotation odomHorz(12);
+pros::IMU imu(1);
 bool will_val = false;
 bool wing_val = false;
+bool mid_descor_val = false;
 pros::adi::DigitalOut wing('h');
-lemlib::TrackingWheel vert_TrackingWheel(&odomVert, lemlib::Omniwheel::NEW_2, .75); //(&encoder name, wheeltype, offset)
-lemlib::TrackingWheel horz_TrackingWheel(&odomHorz, lemlib::Omniwheel::NEW_2, -2); //(&encoder name, wheeltype, offset)
+lemlib::TrackingWheel vert_TrackingWheel(&odomVert, lemlib::Omniwheel::NEW_275, .45); //(&encoder name, wheeltype, offset)
+lemlib::TrackingWheel horz_TrackingWheel(&odomHorz, lemlib::Omniwheel::NEW_275, -2); //(&encoder name, wheeltype, offset)
 
 lemlib::OdomSensors sensors(&vert_TrackingWheel, nullptr,  &horz_TrackingWheel, nullptr, &imu);
 
 
-// lateral PID controllerf
 
 // lateral PID controller
 lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
@@ -49,7 +48,7 @@ lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(1.7, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               0, // integral gain (kI)
                                               10, // derivative gain (kD)
                                               3, // anti windup
@@ -79,7 +78,7 @@ void initialize() {
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
             std::cout << "X: " << chassis.getPose().x << " Y: " << chassis.getPose().y << " Theta: " << chassis.getPose().theta << "         Intake velocity: " << Intake.get_actual_velocity() << std::endl;
             // delay to save resources
-            pros::delay(1000);
+            pros::delay(500);
 
         }
     });
@@ -132,21 +131,107 @@ void competition_initialize() {}
  * task, not resume it from where it left off.
  */
  
- void rollers(int intake, double top){
+ void rollers(double intake, double top){
 	Intake.move(127*intake);
 	Top.move(127*top);
 }
 
 void autonomous(){
     bool sawp = false;
-    bool right = true;
+    bool right = false;
     bool left = false;
-    bool skills = false;
+    bool skills_old = false;
+    bool skills_new = true;
     if(sawp){
         //SAWP
+        
         chassis.setPose(0, 0, 0);
         rollers(1,0);
-        chassis.moveToPoint(0,32, 1600,{.maxSpeed = 80, .minSpeed=40, .earlyExitRange=10});
+        chassis.moveToPoint(0,31, 1600,{.maxSpeed = 60, .minSpeed=30, .earlyExitRange=10});
+        chassis.turnToHeading(90,1000,{.maxSpeed = 80, .minSpeed=40});
+        little_will.set_value(1);
+        chassis.moveToPoint(10,32, 1250, {.minSpeed = 50});
+        chassis.moveToPoint(-26, 32, 1500,{.forwards = false, .maxSpeed = 70});
+        rollers(0,0);
+        pros::delay(700);//time to start extake
+        rollers(1,1);
+        pros::delay(1000);//extake into right goal
+        rollers(0,0);
+        little_will.set_value(0);
+
+        //start picking up 
+        
+        chassis.moveToPose(-13, 24, 180, 1500, {.minSpeed = 50});
+        pros::delay(300);
+        rollers(1,1);
+        pros::delay(500);
+        rollers(1,0);
+        chassis.moveToPose(-32, 4, 230, 1500, {.minSpeed = 50});
+        chassis.turnToHeading(180,1000, {.maxSpeed = 80, .minSpeed = 50});
+        chassis.moveToPoint(-27.8, -36.8, 3000, {.maxSpeed = 80, .minSpeed = 40});
+
+
+        //grab left corner balls
+        pros::delay(700);
+        little_will.set_value(1);
+        chassis.turnToHeading(135, 1000, {.minSpeed = 50});
+        //chassis.moveToPoint(-45, -27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 30, .earlyExitRange=3});
+        chassis.moveToPoint(-41, -24.5, 1500, {.forwards = false, .maxSpeed = 70,.earlyExitRange=3});
+        pros::delay(600);
+        //score into middle goal
+        middle.set_value(1);
+        rollers(1,-1);
+        pros::delay(950);
+        rollers(0,0);
+        middle.set_value(0);
+
+        //move to left side matchload
+        rollers(1,0);
+        chassis.moveToPoint(-6,-65,3000,{.maxSpeed = 75, .minSpeed=30, .earlyExitRange=10});
+        chassis.turnToHeading(90,1000,{.minSpeed=50});
+        chassis.moveToPoint(14,-65,1250);
+        chassis.moveToPoint(-27, -65, 2000, {.forwards = false});
+        pros::delay(500);
+        rollers(1,1);
+        while (true){
+            if (Intake.get_actual_velocity() < 30){
+                rollers(-1,0);
+            }
+            else{
+                rollers(1,1);
+            }
+        }
+    }
+    
+
+    if (right){
+        chassis.setPose(0, 0, 0);
+        rollers(1,0);
+        chassis.moveToPose(-32, 4, 270, 1500, {.minSpeed = 50});
+        chassis.moveToPose(0,31, 0, 1600,{.maxSpeed = 60, .minSpeed=30, .earlyExitRange=10});
+        chassis.turnToHeading(90,1000,{.maxSpeed = 80, .minSpeed=40});
+        little_will.set_value(1);
+        chassis.moveToPoint(10,32, 1250, {.minSpeed = 50});
+        chassis.moveToPoint(-26, 32, 1500,{.forwards = false});
+        rollers(0,0);
+        pros::delay(700);//time to start extake
+        rollers(1,1);
+        pros::delay(850);//extake into right goal
+        rollers(0,0);
+        little_will.set_value(0);
+
+
+        chassis.moveToPose(-13, 24, 180, 1500, {.minSpeed = 50});
+        pros::delay(300);
+        rollers(1,1);
+        pros::delay(500);
+        rollers(1,0);
+
+
+        /*
+        chassis.setPose(0, 0, 0);
+        rollers(1,0);
+        chassis.moveToPoint(0,31, 1600,{.maxSpeed = 60, .minSpeed=30, .earlyExitRange=10});
         chassis.turnToHeading(90,1000,{.maxSpeed = 80, .minSpeed=40});
         little_will.set_value(1);
         chassis.moveToPoint(10,32, 1250, {.minSpeed = 50});
@@ -167,117 +252,22 @@ void autonomous(){
         rollers(1,0);
         chassis.moveToPose(-32, 4, 230, 1500, {.minSpeed = 50});
         chassis.turnToHeading(180,1000, {.maxSpeed = 80, .minSpeed = 50});
-        chassis.moveToPoint(-30, -37, 3000, {.maxSpeed = 80, .minSpeed = 40});
+        chassis.moveToPoint(-27.8, -36.8, 3000, {.maxSpeed = 80, .minSpeed = 40});
+
 
         //grab left corner balls
         pros::delay(700);
         little_will.set_value(1);
         chassis.turnToHeading(135, 1000, {.minSpeed = 50});
         //chassis.moveToPoint(-45, -27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 30, .earlyExitRange=3});
-        chassis.moveToPoint(-42, -28.4, 1500, {.forwards = false, .maxSpeed = 70, .minSpeed = 30, .earlyExitRange=3});
+        chassis.moveToPoint(-41, -24.5, 1500, {.forwards = false, .maxSpeed = 70,.earlyExitRange=3});
         pros::delay(600);
         //score into middle goal
         middle.set_value(1);
-        rollers(1,1);
-        pros::delay(650);
+        rollers(1,-1);
+        pros::delay(1500);
         rollers(0,0);
         middle.set_value(0);
-
-        //move to left side matchload
-        rollers(1,0);
-        chassis.moveToPoint(-6,-67.5,3000,{.maxSpeed = 75, .minSpeed=30, .earlyExitRange=10});
-        chassis.turnToHeading(90,1000,{.minSpeed=50});
-        chassis.moveToPoint(8,-70,1250);
-        chassis.moveToPoint(-27, -70, 2000, {.forwards = false});
-        pros::delay(500);
-        rollers(1,1);
-        while (true){
-            if (Intake.get_actual_velocity() < 30){
-                rollers(-1,0);
-            }
-            else{
-                rollers(1,1);
-            }
-        }
-    }
-    
-
-    if (right){
-        chassis.setPose(0, 0, 0);
-        rollers(1,0);
-        chassis.moveToPoint(0,33, 1600,{.maxSpeed = 80, .minSpeed=40, .earlyExitRange=10});
-        chassis.turnToHeading(90,1000,{.maxSpeed = 80, .minSpeed=40});
-        little_will.set_value(1);
-        chassis.moveToPoint(10,32, 10010, {.minSpeed = 50});
-        chassis.moveToPoint(-26, 32, 1500,{.forwards = false});
-        rollers(0,0);
-        pros::delay(700);//time to start extake
-        rollers(1,1);
-        pros::delay(2000);//extake into right goal
-        rollers(0,0);
-        little_will.set_value(0);
-
-        //start picking up 
-        
-        chassis.moveToPose(-13, 24, 180, 1500, {.minSpeed = 50});
-        pros::delay(300);
-        rollers(1,1);
-        pros::delay(500);
-        rollers(1,0);
-        chassis.moveToPose(-32, 4, 230, 1500, {.minSpeed = 50});
-        chassis.turnToHeading(180,1000, {.maxSpeed = 80, .minSpeed = 50});
-        chassis.moveToPoint(-30, -37, 3000, {.maxSpeed = 80, .minSpeed = 40});
-
-        //grab left corner balls
-        pros::delay(700);
-        little_will.set_value(1);
-        chassis.turnToHeading(135, 1000, {.minSpeed = 50});
-        //chassis.moveToPoint(-45, -27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 30, .earlyExitRange=3});
-        chassis.moveToPoint(-42, -28.4, 1500, {.forwards = false, .maxSpeed = 70, .minSpeed = 30, .earlyExitRange=3});
-        pros::delay(600);
-        //score into middle goal
-        middle.set_value(1);
-        rollers(1,1);
-        pros::delay(2650);
-        rollers(0,0);
-        middle.set_value(0);
-        /*
-        //Right
-        chassis.setPose(0, 0, 0);
-        rollers(1,0);
-        chassis.moveToPoint(0,32, 1600,{ .maxSpeed = 60, .minSpeed=40, .earlyExitRange=10});
-        chassis.turnToHeading(90,1000,{ .maxSpeed = 50, .minSpeed=40});
-        little_will.set_value(1);
-        chassis.moveToPoint(10,32, 1500);
-        chassis.moveToPoint(-26, 32, 1500,{.forwards = false, .maxSpeed = 60});
-        rollers(0,0);
-        pros::delay(1000);//time to start extake
-        rollers(1,1);
-        pros::delay(2250);//extake into right goal
-        rollers(0,0);
-        little_will.set_value(0);
-
-        //start picking up 
-        
-        chassis.moveToPose(-13, 24, 180, 1500, {.maxSpeed = 60, .minSpeed = 50});
-        pros::delay(300);
-        rollers(1,1);
-        pros::delay(500);
-        rollers(1,0);
-        chassis.moveToPose(-32, 4, 230, 1500, {.maxSpeed = 60, .minSpeed = 50});
-        chassis.turnToHeading(180,1000, {.maxSpeed = 60, .minSpeed = 50});
-        chassis.moveToPoint(-30, -37, 3000, {.maxSpeed = 60, .minSpeed = 40});
-
-        //grab left corner balls
-        pros::delay(1300);
-        little_will.set_value(1);
-        chassis.turnToHeading(135, 1000, {.minSpeed = 50});
-        //chassis.moveToPoint(-45, -27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 30, .earlyExitRange=3});
-        chassis.moveToPoint(-42, -28.4, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 30, .earlyExitRange=3});
-        pros::delay(800);
-        //score into middle goal
-        middle.set_value(1);
-        rollers(1,1);
         */
     }
 
@@ -315,12 +305,140 @@ void autonomous(){
     }
 
 
+    if(skills_new){
+        chassis.setPose(0,0,0);
+        wing.set_value(1);
+        rollers(1,0);
+        chassis.moveToPoint(-4, 16.8, 1000, {.maxSpeed = 60, .minSpeed = 40});
+        chassis.waitUntilDone();
+        rollers(0,0);
+        chassis.moveToPoint(-11.4, 25, 1000,{.minSpeed = 40});
+        chassis.turnToHeading(-135, 1000, {.minSpeed = 40});
+        chassis.moveToPose(3, 42, 135, 1000,{.forwards = false, .lead = .3, .minSpeed = 40,});
+        chassis.waitUntilDone();
+        middle.set_value(1);
+        rollers(1,-1);
+        pros::delay(2000);
+        rollers(0,0);
+        middle.set_value(0);
+        chassis.moveToPoint(-29.5, 3.6, 1000, {.minSpeed = 40});
+        chassis.turnToHeading(180, 1000, {.minSpeed = 40});
+        chassis.moveToPose(-31, -15, 180, 1000, {.minSpeed = 40});
+        little_will.set_value(1);
+        chassis.waitUntilDone();
+        rollers(1,1);
+        pros::delay(4000);
+        rollers(0,0);
+        chassis.moveToPose(-45.3, 19.7, 180, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPoint(-42.3, 87, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPose(-32, 101.7, -137, 1000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        chassis.turnToHeading(0, 1000, { .maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPose(-29, 78.3, 0,1000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        chassis.waitUntilDone();
+        rollers(1,1);
+        pros::delay(4000);
+        rollers(1,0);
+
+    }
 
 
 
 
+    if(skills_old){
 
-    if(skills){
+        chassis.setPose(0, 0, 0);
+        rollers(1,0);
+        chassis.moveToPoint(0,31, 1600,{.maxSpeed = 80, .minSpeed=40, .earlyExitRange=10});
+        chassis.turnToHeading(90,1000,{.maxSpeed = 80, .minSpeed=40});
+        little_will.set_value(1);
+        chassis.moveToPoint(10,32, 2250, {.maxSpeed = 70, .minSpeed = 50});
+        chassis.moveToPoint(-26, 32, 1500,{.forwards = false});
+        rollers(0,0);
+        pros::delay(700);//time to start extake
+        rollers(1,1);
+        pros::delay(4000);//extake into right goal
+        rollers(0,0);
+        little_will.set_value(0);
+
+        //start picking up 
+        
+        chassis.moveToPose(-13, 24, 180, 1500, {.minSpeed = 50});
+        pros::delay(300);
+        rollers(1,1);
+        pros::delay(500);
+        rollers(1,0);
+        chassis.moveToPose(-32, 4, 230, 1500, {.minSpeed = 50});
+        pros::delay(500);
+        little_will.set_value(1);
+        chassis.turnToHeading(180,1000, {.maxSpeed = 80, .minSpeed = 50});
+        //chassis.moveToPoint(-30, -37, 3000, {.maxSpeed = 80, .minSpeed = 40});
+        little_will.set_value(0);
+        chassis.moveToPoint(-27, -36.8, 3000, {.maxSpeed = 80, .minSpeed = 40});
+
+        //grab left corner balls
+        pros::delay(800);
+        little_will.set_value(1);
+        chassis.turnToHeading(135, 1000);
+        //chassis.moveToPoint(-38.5, -25.8, 1500, {.forwards = false, .maxSpeed = 70,.earlyExitRange=3});
+        chassis.moveToPoint(-41, -24.5, 1500, {.forwards = false, .maxSpeed = 70,.earlyExitRange=3});
+        pros::delay(600);
+        //score into middle goal
+        middle.set_value(1);
+        rollers(.5,-.5);
+        pros::delay(2650);
+        rollers(0,0);
+        middle.set_value(0);
+        
+
+        //move to left side matchload
+        rollers(1,0);
+        chassis.moveToPoint(-6,-65,3000,{.maxSpeed = 75, .minSpeed=30, .earlyExitRange=10});
+        chassis.turnToHeading(90,1000,{.minSpeed=50});
+        chassis.moveToPoint(14,-65,3250);
+        chassis.moveToPoint(0, -65, 1000, {.minSpeed = 40});
+        chassis.turnToHeading(-135, 1000, {.minSpeed = 40});
+        little_will.set_value(0);
+        chassis.moveToPose(-23.5, -77.4, 270, 1000, {.minSpeed = 40});
+        chassis.moveToPose(-82, -77.4, 270, 3000, {.minSpeed = 40});
+
+
+
+        chassis.moveToPose(-102, -60.5, -90, 1000, {.minSpeed = 40});
+        chassis.moveToPose(-83, -61, -90, 1000, {.forwards = false, .minSpeed = 40});
+        pros::delay(500);
+        rollers(1,1);
+        pros::delay(3000);
+        rollers(0,0);
+        chassis.moveToPoint(-115, -60.4, 3000,{.minSpeed = 40});
+        chassis.moveToPose(-83, -61, -90, 1000, {.forwards = false, .minSpeed = 40});
+        pros::delay(500);
+        rollers(1,1);
+        pros::delay(3000);
+        rollers(0,0);
+        chassis.moveToPoint(-102, -60.5, 1000, {.minSpeed = 40});
+        
+
+
+
+
+        /*
+        chassis.moveToPose(-100, -65, -90, 1000, {.minSpeed = 40});
+        chassis.moveToPose(-81, -65, -90, 1000, {.forwards = false, .minSpeed = 40});
+        pros::delay(500);
+        rollers(1,1);
+        pros::delay(3000);
+        rollers(0,0);
+        chassis.moveToPoint(-115, -65, 3000,{.minSpeed = 40});
+        chassis.moveToPose(-81, -65, -90, 1000, {.forwards = false, .minSpeed = 40});
+        pros::delay(500);
+        rollers(1,1);
+        pros::delay(3000);
+        rollers(0,0);
+        chassis.moveToPoint(-100, -65, 1000, {.minSpeed = 40});
+        */
+
+
+
         /*
         //Skills
         chassis.setPose(0, 0, 0);
@@ -475,13 +593,6 @@ void autonomous(){
         chassis.moveToPoint(0, -10, 1000, {.forwards = false});
         chassis.moveToPoint(0,10,3000, {.minSpeed = 80});
         */
-        rollers(-1,0);
-        little_will.set_value(1);
-        leftMotors.move(110);
-        rightMotors.move(110);
-        pros::delay(800);
-        leftMotors.move(0);
-        rightMotors.move(0);
     } 
 
 }
@@ -505,7 +616,16 @@ pros::Task wing_task_thing([]() {
     }
     pros::delay(20);
 });
-        
+pros::Task mid_descor_task_thing([]() {
+    while (true){
+        if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)){
+            mid_descor_val = !mid_descor_val;
+            mid_descor.set_value(mid_descor_val);
+            pros::delay(500);
+        }
+    }
+    pros::delay(20);
+});
 void opcontrol() {
 
 	while (true) {
@@ -523,7 +643,7 @@ void opcontrol() {
             rollers(1,1);
         }else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
             middle.set_value(1);
-            rollers(1,1);
+            rollers(1,-1);
         }else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)){
             rollers(-1,-1);
         }else {
