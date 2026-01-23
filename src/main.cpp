@@ -259,18 +259,18 @@ void autonomous(){
         little_will.set_value(0);
         chassis.turnToHeading(180, 1000, {.minSpeed = 40});
         little_will.set_value(1);
-        chassis.moveToPoint(33, -15, 1500, {.maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPoint(33, -15, 1400, {.maxSpeed = 60, .minSpeed = 40});
         chassis.moveToPoint(33, 27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
-        pros::delay(500);
+        pros::delay(1000);
         little_will.set_value(0);
         rollers(1,1);
         pros::delay(2000);
         rollers(0,0);
-        chassis.moveToPoint(33, 8, 1000, {.minSpeed = 40});
-        chassis.turnToHeading(140, 1000, {.minSpeed = 40});
-        chassis.moveToPoint(19, 27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPoint(33, 6, 1000, {.minSpeed = 40});
+        chassis.turnToHeading(130, 1000, {.minSpeed = 40});
+        chassis.moveToPoint(22, 25, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
         chassis.turnToHeading(180, 1000, {.minSpeed = 40});
-        chassis.moveToPoint(20, 43, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPoint(22, 38, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
         wing.set_value(0);
         /*
         chassis.setPose(0, 0, 0);
@@ -702,7 +702,7 @@ pros::Task mid_descor_task_thing([]() {
     pros::delay(20);
 });
 void opcontrol() {
-    wing.set_value(1);
+    //wing.set_value(1);
 	while (true) {
         //pros::Task little_task_handle(little_task);
         //pros::Task wing_task_handle(wing_task);
