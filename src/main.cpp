@@ -259,18 +259,18 @@ void autonomous(){
         little_will.set_value(0);
         chassis.turnToHeading(180, 1000, {.minSpeed = 40});
         little_will.set_value(1);
-        chassis.moveToPoint(30, -10, 1500, {.maxSpeed = 60, .minSpeed = 40});
-        chassis.moveToPoint(33, 27, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
-        chassis.waitUntilDone();
+        chassis.moveToPoint(33, -15, 1500, {.maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPoint(33, 27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        pros::delay(500);
         little_will.set_value(0);
         rollers(1,1);
         pros::delay(2000);
         rollers(0,0);
-        chassis.moveToPoint(33, 13, 1000, {.minSpeed = 40});
+        chassis.moveToPoint(33, 8, 1000, {.minSpeed = 40});
         chassis.turnToHeading(140, 1000, {.minSpeed = 40});
-        chassis.moveToPoint(21, 27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPoint(19, 27, 1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
         chassis.turnToHeading(180, 1000, {.minSpeed = 40});
-        chassis.moveToPoint(21, 43, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPoint(20, 43, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
         wing.set_value(0);
         /*
         chassis.setPose(0, 0, 0);
