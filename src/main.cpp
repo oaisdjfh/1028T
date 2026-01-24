@@ -148,8 +148,8 @@ void competition_initialize() {}
 
 void anti_jam(){
     for(int i = 0; i < 30; i++){
-            if (Intake.get_actual_velocity() < 30 && Intake.get_actual_velocity() > -30){
-                rollers(-1,0);
+            if (Intake.get_actual_velocity() < 30 && Intake.get_actual_velocity() > -30 || Top.get_actual_velocity() < 30 && Top.get_actual_velocity() > -30){
+                rollers(-1,-1);
             }
             else{
                 rollers(1,1);
@@ -162,10 +162,10 @@ void anti_jam(){
 //68, 91, 117
 void autonomous(){
     bool sawp = false;
-    bool right = true;
+    bool right = false;
     bool left = false;
     bool skills_old = false;
-    bool skills_new = false;
+    bool skills_new = true;
     bool test = false;
     if (test){
         chassis.setPose(0, 0, 0);
@@ -342,13 +342,27 @@ void autonomous(){
         chassis.setPose(0,0,0);
         wing.set_value(1);
         rollers(1,0);
-        chassis.moveToPoint(-4, 16.8, 1000, {.maxSpeed = 60, .minSpeed = 40});
+
+
+
+        //chassis.moveToPoint(-4, 16.8, 1000, {.maxSpeed = 60, .minSpeed = 40});    Use for full skills auton
+
+        //Used for partial auton
+        chassis.moveToPoint(-11, 28, 1000, {.maxSpeed = 60, .minSpeed = 40});
+        pros::delay(750);
+        little_will.set_value(1);
+
+
+
         chassis.waitUntilDone();
         pros::delay(100);
+        pros::delay(900); //Used for partial auton
         rollers(0,0);
-        chassis.moveToPoint(-11.4, 25, 1000,{.minSpeed = 40});
+        little_will.set_value(0); //Used for partial auton
+        chassis.moveToPoint(-11.4, 25, 1000,{.forwards = false,.minSpeed = 40}); //forwards is false for partial auton
         chassis.turnToHeading(-135, 1000, {.minSpeed = 40});
-        chassis.moveToPose(3, 42, 135, 1000,{.forwards = false, .lead = .3, .minSpeed = 40});
+        //chassis.moveToPose(3, 42, 135, 1000,{.forwards = false, .lead = .3, .minSpeed = 40}); //Used for full skills auton
+        chassis.moveToPose(6, 42, 155, 1000,{.forwards = false, .lead = .3, .minSpeed = 40}); //Used for partial auton
         chassis.waitUntilDone();
         pros::delay(300);
         middle.set_value(1);
@@ -377,22 +391,50 @@ void autonomous(){
         chassis.moveToPoint(-33, 91, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
         chassis.turnToHeading(345, 2000, { .maxSpeed = 60, .minSpeed = 40});
         chassis.moveToPoint(-33, 75,1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        
         pros::delay(750);
+        /*
         rollers(1,1);
         pros::delay(2500);
+        */
+        anti_jam();
         rollers(1,0);
         little_will.set_value(1);
         chassis.moveToPoint(-30, 110,3000, {.maxSpeed = 70, .minSpeed = 50});
         chassis.moveToPoint(-32, 75, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
         pros::delay(1000);
-        /*
-        rollers(1,1);
-        pros::delay(2500);
-        rollers(1,0);
-        */
         anti_jam();
         rollers(1,0);
         little_will.set_value(0);
+
+
+
+
+        //start of teh rest of partial auton
+
+
+        chassis.moveToPoint(-31, 90, 2000, {.minSpeed = 40});
+        chassis.turnToHeading(125,1000, {.minSpeed = 40});
+        chassis.moveToPoint(-8, 76, 1500, {.minSpeed = 40});
+        pros::delay(750);
+        little_will.set_value(1);
+        chassis.turnToHeading(90,1000, {.minSpeed = 40});
+        chassis.moveToPoint(39, 76, 2000, {.minSpeed = 40});
+        little_will.set_value(0);
+        pros::delay(750);
+        little_will.set_value(1);
+        chassis.turnToHeading(40, 1000, {.minSpeed = 40});
+        chassis.moveToPose(26, 62, 45, 2000, {.forwards = false, .lead = .3, .maxSpeed = 60, .minSpeed = 40});
+        chassis.waitUntilDone();
+        middle.set_value(1);
+        rollers(.8,-.6);
+        pros::delay(2000);
+        rollers(1,0);
+        middle.set_value(0);
+        chassis.moveToPoint(65, 101, 4000);
+        chassis.turnToHeading(0,1000);
+
+        /*
         chassis.moveToPose(-16, 102, 45, 2000, {.maxSpeed = 60, .minSpeed = 40});
         chassis.moveToPose(1, 112, 90, 2500, {.maxSpeed = 60, .minSpeed = 40});
         
@@ -406,6 +448,7 @@ void autonomous(){
         chassis.waitUntilDone();
         pros::delay(200);
         chassis.turnToHeading(90,1000);
+        chassis.waitUntilDone();
         after_distance_x = front_distance.get();
         after_distance_y = side_distance.get();
 
@@ -414,6 +457,7 @@ void autonomous(){
         //
         //
         chassis.setPose(1+distance_traveled_inch_x, 112+distance_traveled_inch_y, chassis.getPose().theta);
+        */
     }
 
 
