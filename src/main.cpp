@@ -159,23 +159,16 @@ void anti_jam(int seconds = 25){
 }
 //9,109,64
 //68, 91, 117
-bool sawp = false;
-bool right = false;
-bool left = false;
-bool skills_old = false;
-bool skills_new = false;
-bool test = false;
-bool right_4 = false;
-bool left_4 = true;
+int autos = 1;
 void autonomous(){
     
 
-    if (test){
+    if (autos == 7){
         chassis.setPose(0, 0, 0);
         chassis.turnToHeading(5,1000);
         }
 
-    if(sawp){
+    if(autos == 1){
         //SAWP
         
         chassis.setPose(0, 0, 0);
@@ -245,7 +238,34 @@ void autonomous(){
     }
     
 
-    if (right){
+    if (autos == 2){
+        //right 7
+        chassis.setPose(0,0,0);
+        rollers(1,0);
+        wing.set_value(1);
+        chassis.moveToPose(8,30,29,2000,{.minSpeed = 60});
+        pros::delay(750);
+        little_will.set_value(1);
+        chassis.turnToHeading(137, 1000, {.minSpeed = 60});
+        chassis.moveToPoint(29, 7, 2000, {.minSpeed = 60});
+        little_will.set_value(0);
+        chassis.turnToHeading(180, 1000, {.minSpeed = 60});
+        little_will.set_value(1);
+        chassis.moveToPoint(33, -15, 1000, {.maxSpeed = 70, .minSpeed = 60});
+        chassis.moveToPoint(33, 27, 1500, {.forwards = false, .maxSpeed = 70, .minSpeed = 60});
+        pros::delay(1000);
+        little_will.set_value(0);
+        anti_jam(20);
+        rollers(0,0);
+		
+		chassis.moveToPoint(31, 8, 1000, {.minSpeed = 40});
+        chassis.turnToHeading(-222, 1000, {.minSpeed = 40});
+        chassis.moveToPose(22, 26, 180,1500, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        //chassis.turnToHeading(180, 1000, {.minSpeed = 30});
+        chassis.moveToPoint(22, 37, 1000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
+        wing.set_value(0);
+		chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+        /*
         chassis.setPose(0,0,0);
         rollers(1,0);
         wing.set_value(1);
@@ -271,11 +291,12 @@ void autonomous(){
         chassis.moveToPoint(22, 37, 2000, {.forwards = false, .maxSpeed = 60, .minSpeed = 40});
         wing.set_value(0);
 		chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-		
+		*/
         
     }
 
-    if(right_4){
+    if(autos == 5){
+        //right 4
         chassis.setPose(0,0,0);
         rollers(1,0);
         wing.set_value(1);
@@ -302,7 +323,7 @@ void autonomous(){
     }
 
 
-    if(left){
+    if(autos == 3){
         //Left side
         //-1.77, -32.24, 180 facing to left matchload
         //-1.8, -32, -90 facing to middle goal
@@ -340,7 +361,8 @@ void autonomous(){
 
     }
 
-    if(left_4){
+    if(autos == 6){
+        //left4
         chassis.setPose(0,0,0);
         rollers(1,0);
         wing.set_value(1);
@@ -362,7 +384,8 @@ void autonomous(){
         wing.set_value(0);
     }
 
-    if(skills_new){
+    if(autos == 4){
+        //skills
         chassis.setPose(0,0,0);
         wing.set_value(1);
         rollers(1,0);
