@@ -164,8 +164,13 @@ void autonomous(){
     
 
     if (autos == 7){
-        chassis.setPose(0, 0, 0);
-        chassis.turnToHeading(5,1000);
+        rollers(1,0);
+        chassis.setPose(0,0,0);
+        chassis.moveToPoint(0, 165, 3000, {.maxSpeed = 60, .minSpeed = 30});
+        chassis.waitUntilDone();
+        chassis.moveToPoint(0,0, 3000, {.forwards = false, .maxSpeed = 30});
+        chassis.waitUntilDone();
+        chassis.setPose((side_distance.get()/25.4), 31, chassis.getPose().theta);
         }
 
     if(autos == 1){
@@ -430,9 +435,18 @@ void autonomous(){
 		chassis.cancelAllMotions();
         
 
+        chassis.moveToPose(-12, 112, 90, 2000, {.maxSpeed = 60, .minSpeed = 40});
+        chassis.moveToPose(1, 112, 90, 2500, {.maxSpeed = 60, .minSpeed = 40});
 
+        chassis.moveToPoint(165, 116, 2500, {.maxSpeed = 90, .minSpeed = 70});
+        chassis.moveToPoint(0,120, 2000, {.forwards = false, .maxSpeed = 30});
+        chassis.waitUntilDone();
+        chassis.setPose(31, 122-(side_distance.get()/25.4), chassis.getPose().theta);
+        pros::delay(500);
+        chassis.turnToHeading(180, 1000);
+        chassis.moveToPoint(39, 77, 1000, {.minSpeed = 40});
 
-
+        /*
 
         chassis.moveToPoint(-31, 90, 2000, {.minSpeed = 40});
         chassis.turnToHeading(125,1000, {.minSpeed = 40});
@@ -490,7 +504,7 @@ void autonomous(){
 		little_will.set_value(1);
 		chassis.moveToPoint(-10, -12, 1500,{.maxSpeed = 70, .minSpeed = 50});
 
-
+        */
 
         //
         //
